@@ -2,8 +2,20 @@
 import { useState, useEffect } from 'react';
 import ProjectItem from './ProjectItem';
 
+interface Project {
+  id: number;
+  title: string;
+  description: { type: string; children: { type: string; text: string }[] }[];
+  github_url: string | null;
+  image?: {
+    data?: {
+      url: string;
+    };
+  };
+}
+
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 2;
@@ -11,7 +23,9 @@ export default function ProjectsPage() {
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const res = await fetch(`http://localhost:1337/api/projects?pagination[page]=${currentPage}&pagination[pageSize]=${itemsPerPage}&populate=image`);
+        const res = await fetch(
+          `http://localhost:1337/api/projects?pagination[page]=${currentPage}&pagination[pageSize]=${itemsPerPage}&populate=image`
+        );
         const json = await res.json();
 
         setProjects(json.data);
@@ -20,7 +34,7 @@ export default function ProjectsPage() {
         const pageSize = json.meta.pagination.pageSize;
         setTotalPages(Math.ceil(total / pageSize));
       } catch (err) {
-        console.error("Error fetching projects:", err);
+        console.error('Error fetching projects:', err);
       }
     }
 
@@ -31,25 +45,28 @@ export default function ProjectsPage() {
     <div>
       <h1>Projects</h1>
       <ul>
-        {projects.map((project: any) => (
+        {projects.map((project: Project) => (
           <ProjectItem
             key={project.id}
             title={project.title}
-            description={project.description?.[0]?.children?.[0]?.text}
-            imageUrl={`http://localhost:1337${project.image?.data?.url}`}
-            link={project.github_url || "#"}
+            description={project.description?.[0]?.children?.[0]?.text ?? 'No description'}
+            imageUrl={`http://localhost:1337${project.image?.url ?? ''}`}
+            link={project.github_url || '#'}
           />
         ))}
       </ul>
 
-      <div style={{ marginTop: "1rem" }}>
+      <div style={{ marginTop: '1rem' }}>
         <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>
           ⬅ Previous
         </button>
         <span style={{ margin: '0 10px' }}>
           Page {currentPage} of {totalPages}
         </span>
-        <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>
+        <button
+          onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        >
           Next ➡
         </button>
       </div>
